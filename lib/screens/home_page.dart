@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import './started_page.dart';
+import 'forget_pw_page.dart';
 
 class Noti {
   final String image;
@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const StartedPage()),
+        MaterialPageRoute(builder: (_) => ForgetPwPage()),
       );
     }
   }
