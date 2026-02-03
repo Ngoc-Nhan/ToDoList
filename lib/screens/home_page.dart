@@ -1,216 +1,130 @@
 import 'package:flutter/material.dart';
-import 'forget_pw_page.dart';
+import 'package:provider/provider.dart';
+import 'package:todolist/screens/services/task_view_model.dart';
+import '../models/task.dart';
+import '../services/task_view_model.dart';
+import './detail/task_detail_screen.dart';
 
-class Noti {
-  final String image;
-  final String title;
-  final String description;
-  Noti({
-    required this.image,
-    required this.title,
-    required this.description,
-  });
-}
-
-final List<Noti> noti = [
-  Noti(
-      image: 'assets/images/one.png',
-      title: 'Easy Time Management',
-      description:
-          'With managemnt based on priority and dailt task, it will give you convenience in managing and determining the tasks that must be done first'),
-  Noti(
-      image: 'assets/images/two.png',
-      title: 'Inscrease Work Effectiveness',
-      description:
-          'Time management and the dterminantion of more important tasks will give your job statistics better and always improve '),
-  Noti(
-      image: 'assets/images/three.png',
-      title: 'Reminder Notification',
-      description:
-          'The advantage of this application is that it also provides reminderes for you so you don\'nt forget to keep doingyour assignments well and according to the time you have set'),
-];
-
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  final PageController _pageController = PageController();
-  int currentIndex = 0;
-  final int totalPage = 3;
-
-  void nextPage() {
-    if (currentIndex < totalPage - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => ForgetPwPage()),
-      );
-    }
-  }
-
-  void skipToLast() {
-    _pageController.animateToPage(
-      totalPage - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void prevPage() {
-    if (currentIndex > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  Widget buildNotiItem(Noti item) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(
-          item.image,
-          height: 220,
-          fit: BoxFit.contain,
-        ),
-        const SizedBox(height: 32),
-        Text(
-          item.title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          item.description,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey.shade600,
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final taskVM = context.watch<TaskViewModel>();
+    final tasks = taskVM.tasks;
+
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // const SizedBox(height: 10),
-
-              // ===== DOT + SKIP =====
-              Row(
-                children: [
-                  // DOT
-                  Row(
-                    children: List.generate(totalPage, (index) {
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.only(right: 6),
-                        width: currentIndex == index ? 14 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color:
-                              currentIndex == index ? Colors.blue : Colors.grey,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      );
-                    }),
-                  ),
-
-                  const Spacer(),
-
-                  // SKIP
-                  TextButton(
-                    onPressed: skipToLast,
-                    child: const Text('Skip'),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // ===== PAGE VIEW =====
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (index) {
-                    setState(() => currentIndex = index);
+      backgroundColor: const Color(0xFFF6F7FB),
+      appBar: _buildAppBar(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/add');
+        },
+        child: const Icon(Icons.add),
+      ),
+      body: taskVM.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : tasks.isEmpty
+              ? _buildEmptyView()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: tasks.length,
+                  itemBuilder: (context, index) {
+                    return _buildTaskCard(context, tasks[index]);
                   },
-                  children: noti.map((item) {
-                    return buildNotiItem(item);
-                  }).toList(),
                 ),
-              ),
+    );
+  }
 
-              const SizedBox(height: 20),
+  // ===== Empty View =====
+  Widget _buildEmptyView() {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.inbox, size: 90, color: Colors.grey),
+          SizedBox(height: 12),
+          Text(
+            'No Tasks Yet',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
 
-              // ===== NEXT BUTTON =====
-              Row(
+  // ===== Task Card =====
+  Widget _buildTaskCard(BuildContext context, Task task) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TaskDetailScreen(taskId: task.id ?? 0),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _getTaskColor(task.status),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Checkbox(value: false, onChanged: (_) {}),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔙 Back icon (chỉ hiện từ trang 2)
-                  if (currentIndex > 0)
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: prevPage,
-                      ),
+                  Text(
+                    task.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-
-                  // 👉 khoảng cách giữa back và nút chính
-                  if (currentIndex > 0) const SizedBox(width: 12),
-
-                  // ▶️ Nút chính
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      onPressed: nextPage,
-                      child: Text(
-                        currentIndex == totalPage - 1 ? 'Get Started' : 'Next',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(task.description),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Status: ${task.status}',
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 20),
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );
+  }
+
+  // ===== AppBar =====
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: const Text(
+        'SmartTasks',
+        style: TextStyle(
+          color: Colors.blue,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Color _getTaskColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'in progress':
+        return Colors.red.shade100;
+      case 'pending':
+        return Colors.yellow.shade100;
+      default:
+        return Colors.blue.shade100;
+    }
   }
 }

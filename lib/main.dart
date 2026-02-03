@@ -1,9 +1,22 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import './screens/home_page.dart';
-import 'splash_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:todolist/screens/lay_out_page.dart';
+import 'package:todolist/screens/profile.dart';
+import 'firebase_options.dart';
 
-void main() {
+import 'splash_page.dart';
+import 'screens/home_page.dart';
+import './screens/profile.dart';
+import './screens/authgg.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -15,65 +28,33 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white, // nền toàn app
+        scaffoldBackgroundColor: Colors.white,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
           background: Colors.white,
         ),
       ),
-      home: const SplashPage(),
+      // /  home: AuthScreen()
+
+      //  / ⭐ AUTH WRAPPER (QUAN TRỌNG)
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          // ⏳ Đang check đăng nhập
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const SplashPage();
+          }
+
+          // ✅ ĐÃ LOGIN
+          if (snapshot.hasData) {
+            return LayOutPage();
+            // hoặc HomePage nếu bạn muốn
+          }
+
+          // ❌ CHƯA LOGIN
+          return const AuthScreen();
+        },
+      ),
     );
   }
 }
-
-// class MyApp extends StatefulWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   State<MyApp> createState() => _MyAppState();
-// }
-
-// class _MyAppState extends State<MyApp> {
-//   @override
-//   void initState() {
-//     super.initState();
-
-//     Timer(const Duration(seconds: 2), () {
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (_) => const HomePage()),
-//       );
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       home: Scaffold(
-//         body: Center(
-//           child: Column(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: const [
-//               Text(
-//                 'UTH SmartTask',
-//                 style: TextStyle(fontSize: 24),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// class HomePage extends StatelessWidget {
-//   const HomePage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Scaffold(
-//       body: Center(child: Text('Home Page')),
-//     );
-//   }
-// }

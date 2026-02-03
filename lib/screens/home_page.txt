@@ -1,0 +1,218 @@
+import 'package:flutter/material.dart';
+import 'authgg.dart';
+
+/// ===== MODEL =====
+class Noti {
+  final String image;
+  final String title;
+  final String description;
+
+  Noti({
+    required this.image,
+    required this.title,
+    required this.description,
+  });
+}
+
+/// ===== DATA =====
+final List<Noti> noti = [
+  Noti(
+    image: 'assets/images/one.png',
+    title: 'Easy Time Management',
+    description:
+        'With management based on priority and daily tasks, it gives you convenience in managing and deciding what to do first.',
+  ),
+  Noti(
+    image: 'assets/images/two.png',
+    title: 'Increase Work Effectiveness',
+    description:
+        'Good time management and prioritization improve productivity and work statistics continuously.',
+  ),
+  Noti(
+    image: 'assets/images/three.png',
+    title: 'Reminder Notification',
+    description:
+        'This app provides reminders so you never forget your tasks and always stay on track.',
+  ),
+];
+
+/// ===== PAGE =====
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final PageController _pageController = PageController();
+  int currentIndex = 0;
+
+  final int totalPage = 3;
+
+  /// 👉 Next / Get Started
+  void nextPage() {
+    if (currentIndex < totalPage - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) =>  AuthScreen()),
+      );
+    }
+  }
+
+  /// ⏭ Skip
+  void skipToLast() {
+    _pageController.animateToPage(
+      totalPage - 1,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  /// 🔙 Back
+  void prevPage() {
+    if (currentIndex > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  /// ===== ITEM =====
+  Widget buildNotiItem(Noti item) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(
+          item.image,
+          height: 220,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 32),
+        Text(
+          item.title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          item.description,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.grey.shade600,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// ===== UI =====
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              /// ===== DOT + SKIP =====
+              Row(
+                children: [
+                  Row(
+                    children: List.generate(totalPage, (index) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.only(right: 6),
+                        width: currentIndex == index ? 16 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: currentIndex == index
+                              ? Colors.blue
+                              : Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      );
+                    }),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: skipToLast,
+                    child: const Text('Skip'),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              /// ===== PAGE VIEW =====
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: (index) {
+                    setState(() => currentIndex = index);
+                  },
+                  children: noti.map(buildNotiItem).toList(),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              /// ===== BUTTONS =====
+              Row(
+                children: [
+                  if (currentIndex > 0)
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: prevPage,
+                      ),
+                    ),
+                  if (currentIndex > 0) const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: nextPage,
+                      child: Text(
+                        currentIndex == totalPage - 1 ? 'Get Started' : 'Next',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

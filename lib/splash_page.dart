@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import './screens/home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:todolist/screens/lay_out_page.dart';
+import 'screens/home_page.dart';
+import './screens/authgg.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -13,11 +17,22 @@ class _SplashPageState extends State<SplashPage> {
   void initState() {
     super.initState();
 
-    Future.delayed(const Duration(seconds: 15), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
+    Future.delayed(const Duration(seconds: 2), () {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // ✅ Đã đăng nhập → Home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => LayOutPage()),
+        );
+      } else {
+        // ❌ Chưa đăng nhập → Auth
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => AuthScreen()),
+        );
+      }
     });
   }
 
