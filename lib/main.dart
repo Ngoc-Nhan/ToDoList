@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:todolist/screens/lay_out_page.dart';
-import 'package:todolist/screens/profile.dart';
+import 'package:provider/provider.dart';
+
 import 'firebase_options.dart';
+import 'screens/services/task_view_model.dart';
 
 import 'splash_page.dart';
-import 'screens/home_page.dart';
-import './screens/profile.dart';
-import './screens/authgg.dart';
+import 'screens/authgg.dart';
+import 'screens/lay_out_page.dart';
+// import 'screens/add_task_screen.dart'; // nếu đã có
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +18,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => TaskViewModel()..fetchTasks(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -34,27 +40,27 @@ class MyApp extends StatelessWidget {
           background: Colors.white,
         ),
       ),
-      // /  home: AuthScreen()
 
-      //  / ⭐ AUTH WRAPPER (QUAN TRỌNG)
+      // ⭐ AUTH WRAPPER
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
-          // ⏳ Đang check đăng nhập
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashPage();
           }
 
-          // ✅ ĐÃ LOGIN
           if (snapshot.hasData) {
-            return LayOutPage();
-            // hoặc HomePage nếu bạn muốn
+            return const LayOutPage();
           }
 
-          // ❌ CHƯA LOGIN
           return const AuthScreen();
         },
       ),
+
+      // ⚠️ chỉ bật khi đã làm màn add
+      // routes: {
+      //   '/add': (_) => const AddTaskScreen(),
+      // },
     );
   }
 }
